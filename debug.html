@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Debug Test</title>
+</head>
+<body>
+    <h1>Module Debug Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        const output = document.getElementById('output');
+        
+        async function testModules() {
+            try {
+                output.innerHTML += '<p>Testing modules...</p>';
+                
+                // Test loading main.js
+                const mainModule = await import('./js/main.js');
+                output.innerHTML += '<p>Main module loaded successfully</p>';
+                
+                // Test loading individual modules
+                const modules = [
+                    './js/modules/constants.js',
+                    './js/modules/state.js',
+                    './js/modules/fileHandler.js',
+                    './js/modules/csvParser.js',
+                    './js/modules/filtering.js',
+                    './js/modules/sorting.js',
+                    './js/modules/statistics.js',
+                    './js/modules/tableRenderer.js',
+                    './js/modules/comparison.js',
+                    './js/modules/ui.js'
+                ];
+                
+                for (const modulePath of modules) {
+                    try {
+                        await import(modulePath);
+                        output.innerHTML += `<p style="color: green">✓ ${modulePath} loaded</p>`;
+                    } catch (e) {
+                        output.innerHTML += `<p style="color: red">✗ ${modulePath} error: ${e.message}</p>`;
+                    }
+                }
+                
+                // Check if functions are exposed to window
+                const functions = [
+                    'applyFilters',
+                    'selectAllColumns',
+                    'selectImportantColumns',
+                    'resetSort',
+                    'toggleCompareMode',
+                    'applyCompare',
+                    'loadRepoFile'
+                ];
+                
+                output.innerHTML += '<br><p>Checking window functions:</p>';
+                for (const func of functions) {
+                    if (typeof window[func] === 'function') {
+                        output.innerHTML += `<p style="color: green">✓ window.${func} exists</p>`;
+                    } else {
+                        output.innerHTML += `<p style="color: red">✗ window.${func} missing</p>`;
+                    }
+                }
+                
+            } catch (error) {
+                output.innerHTML += `<p style="color: red">Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+        
+        // Run test after DOM loaded
+        window.addEventListener('DOMContentLoaded', testModules);
+    </script>
+</body>
+</html>
