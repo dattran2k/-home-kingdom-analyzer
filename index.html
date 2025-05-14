@@ -43,12 +43,16 @@
         }
 
         .file-upload {
-            background: #34495e;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            text-align: center;
+        background: #34495e;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        text-align: center;
         }
+            
+            .file-source-options {
+                margin-bottom: 20px;
+            }
 
         .file-upload-label {
             display: inline-block;
@@ -293,10 +297,35 @@
         </div>
 
         <div class="file-upload">
-            <label for="fileInput" class="file-upload-label">
-                📁 Chọn file CSV để phân tích
-            </label>
-            <input type="file" id="fileInput" accept=".csv">
+            <div class="file-source-options">
+                <h3 style="color: #ecf0f1; margin-bottom: 15px;">Select CSV Data Source:</h3>
+                
+                <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
+                    <div>
+                        <input type="radio" id="repoFile" name="fileSource" value="repo" checked>
+                        <label for="repoFile" style="color: #ecf0f1; cursor: pointer;">📂 File from Repository</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="localFile" name="fileSource" value="local">
+                        <label for="localFile" style="color: #ecf0f1; cursor: pointer;">💻 File from Computer</label>
+                    </div>
+                </div>
+                
+                <div id="repoFileDiv">
+                    <select id="repoFileSelect" style="padding: 10px; width: 300px; background: #2c3e50; color: #ecf0f1; border: 1px solid #34495e; border-radius: 5px;">
+                        <option value="Home Kingdom_Full Data_data.csv">Home Kingdom_Full Data_data.csv</option>
+                    </select>
+                    <button class="btn" onclick="loadRepoFile()" style="margin-left: 10px;">📊 Load File</button>
+                </div>
+                
+                <div id="localFileDiv" style="display: none;">
+                    <label for="fileInput" class="file-upload-label">
+                        📁 Choose CSV File from Computer
+                    </label>
+                    <input type="file" id="fileInput" accept=".csv">
+                </div>
+            </div>
+            
             <div id="fileName" style="margin-top: 10px; color: #95a5a6;"></div>
         </div>
 
@@ -305,22 +334,22 @@
                 <div class="control-group">
                     <label for="kingdomFilter">Kingdom:</label>
                     <select id="kingdomFilter">
-                        <option value="all">Tất cả Kingdom</option>
+                        <option value="all">All Kingdoms</option>
                     </select>
                 </div>
 
                 <div class="control-group">
-                    <label for="searchInput">Tìm kiếm tên:</label>
+                    <label for="searchInput">Search Name:</label>
                     <div class="search-container">
                         <span class="search-icon">🔍</span>
-                        <input type="text" id="searchInput" placeholder="Nhập tên người chơi...">
+                        <input type="text" id="searchInput" placeholder="Enter player name...">
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label>Loại người chơi:</label>
+                    <label>Player Type:</label>
                     <select id="playerTypeFilter">
-                        <option value="all">Tất cả</option>
+                        <option value="all">All</option>
                         <option value="tank">Tank (V/D < 1.3)</option>
                         <option value="dps">DPS (V/D ≥ 1.3)</option>
                         <option value="unknown">Unknown</option>
@@ -328,23 +357,23 @@
                 </div>
                 
                 <div class="control-group">
-                    <span style="color: #95a5a6; font-size: 0.9em;">Chỉ hiển thị người chơi có Power ≥ 30M | Tank: V/D < 1.3</span>
+                    <span style="color: #95a5a6; font-size: 0.9em;">Only showing players with Power ≥ 30M | Tank: V/D < 1.3</span>
                 </div>
 
-                <button class="btn" onclick="applyFilters()">Áp dụng bộ lọc</button>
-                <button class="btn btn-secondary" onclick="resetSort()">🔄 Reset sắp xếp</button>
-                <button class="btn btn-secondary" onclick="exportData()">📥 Xuất CSV</button>
+                <button class="btn" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-secondary" onclick="resetSort()">🔄 Reset Sort</button>
+                <button class="btn btn-secondary" onclick="exportData()">📥 Export CSV</button>
             </div>
 
             <div class="filter-section">
-                <h3>Chọn các cột hiển thị:</h3>
+                <h3>Select columns to display:</h3>
                 <div class="columns-filter" id="columnsFilter">
                     <!-- Columns checkboxes will be dynamically generated -->
                 </div>
                 <div style="margin-top: 10px;">
-                    <button class="btn" onclick="selectAllColumns()">Chọn tất cả</button>
-                    <button class="btn btn-secondary" onclick="deselectAllColumns()">Bỏ chọn tất cả</button>
-                    <button class="btn btn-secondary" onclick="selectImportantColumns()">Cột quan trọng</button>
+                    <button class="btn" onclick="selectAllColumns()">Select All</button>
+                    <button class="btn btn-secondary" onclick="deselectAllColumns()">Deselect All</button>
+                    <button class="btn btn-secondary" onclick="selectImportantColumns()">Important Columns</button>
                 </div>
             </div>
 
@@ -380,7 +409,7 @@
             'Home Server', 'Name', 'Lord Id', 'Highest Power', 'Power',
             'Killcount T1', 'Killcount T4', 'Killcount T5', 'T4 +T5',
             'Units Dead', 'Units Healed', 'Victories', 'Defeats', 
-            'Tank Ratio', 'Win Rate (%)', 'Player Type'
+            'Tank Ratio', 'Win Rate (%)', 'Player Type', 'Mana Spent'
         ];
         
         // Default sort order
@@ -392,6 +421,21 @@
         
         // Multi-sort mode
         let multiSortMode = true;
+        
+        // Radio button event listeners
+        document.getElementById('repoFile').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('repoFileDiv').style.display = 'block';
+                document.getElementById('localFileDiv').style.display = 'none';
+            }
+        });
+        
+        document.getElementById('localFile').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('repoFileDiv').style.display = 'none';
+                document.getElementById('localFileDiv').style.display = 'block';
+            }
+        });
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -439,6 +483,7 @@
                     row['Home Server'] = parseInt(row['Home Server']) || 0;
                     row['Lord Id'] = parseInt(row['Lord Id']) || 0;
                     row['Units Healed'] = parseFloat(row['Units Healed']) || 0;
+                    row['Mana Spent'] = parseInt(row['Mana Spent']) || 0;
                     
                     // Calculate win rate
                     const totalBattles = row['Victories'] + row['Defeats'];
@@ -516,10 +561,12 @@
             // Initial display with default sort
             applyFilters();
             
-            // Apply default sort order
-            sortColumn = 'Home Server';
-            sortDirection = 'asc';
-            applyMultiSort();
+            // Apply default sort order - Highest Power descending
+            sortColumn = 'Highest Power';
+            sortDirection = 'desc';
+            multiSortMode = false;
+            sortData();
+            updateTable();
         }
 
         function parseCSVLine(line) {
@@ -607,31 +654,31 @@
             statsContainer.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-value">${stats.total.toLocaleString()}</div>
-                    <div class="stat-label">Tổng người chơi</div>
+                    <div class="stat-label">Total Players</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalKillsT1.toLocaleString()}</div>
-                    <div class="stat-label">Tổng Kills T1</div>
+                    <div class="stat-label">Total Kills T1</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalKillsT4.toLocaleString()}</div>
-                    <div class="stat-label">Tổng Kills T4</div>
+                    <div class="stat-label">Total Kills T4</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalKillsT5.toLocaleString()}</div>
-                    <div class="stat-label">Tổng Kills T5</div>
+                    <div class="stat-label">Total Kills T5</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalT4T5.toLocaleString()}</div>
-                    <div class="stat-label">Tổng T4+T5</div>
+                    <div class="stat-label">Total T4+T5</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalDead.toLocaleString()}</div>
-                    <div class="stat-label">Tổng Units Dead</div>
+                    <div class="stat-label">Total Units Dead</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.totalHealed.toLocaleString()}</div>
-                    <div class="stat-label">Tổng Units Healed</div>
+                    <div class="stat-label">Total Units Healed</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.tanks.toLocaleString()}</div>
@@ -643,7 +690,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${stats.avgWinRate}%</div>
-                    <div class="stat-label">Win Rate TB</div>
+                    <div class="stat-label">Average Win Rate</div>
                 </div>
             `;
         }
@@ -746,12 +793,13 @@
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
                 sortColumn = column;
-                // Special handling for power-related columns - default to descending
+                // Special formatting for power-related columns
                 if (column.toLowerCase().includes('power') || 
                     column.toLowerCase().includes('kill') || 
                     column.toLowerCase().includes('dead') ||
                     column.toLowerCase().includes('heal') ||
-                    column.toLowerCase().includes('victories')) {
+                    column.toLowerCase().includes('victories') ||
+                    column.toLowerCase().includes('mana')) {
                     sortDirection = 'desc';
                 } else {
                     sortDirection = 'asc';
@@ -876,6 +924,53 @@
             sortColumn = 'Home Server';
             sortDirection = 'asc';
             applyMultiSort();
+        }
+        
+        // Function to load file from repository
+        function loadRepoFile() {
+            const fileName = document.getElementById('repoFileSelect').value;
+            document.getElementById('fileName').textContent = `Loading file: ${fileName}...`;
+            
+            // Encode filename to handle spaces
+            const encodedFileName = encodeURIComponent(fileName);
+            
+            // Try different approaches to load the file
+            const loadFile = async () => {
+                try {
+                    // First try with encoded filename
+                    let response = await fetch(encodedFileName);
+                    if (!response.ok) {
+                        // Try with original filename
+                        response = await fetch(fileName);
+                    }
+                    if (!response.ok) {
+                        // Try with ./ prefix
+                        response = await fetch('./' + fileName);
+                    }
+                    if (!response.ok) {
+                        // Try with ./ and encoded
+                        response = await fetch('./' + encodedFileName);
+                    }
+                    
+                    if (response.ok) {
+                        const data = await response.text();
+                        document.getElementById('fileName').textContent = `File loaded: ${fileName}`;
+                        parseCSV(data);
+                    } else {
+                        throw new Error('Failed to load file from all attempted paths');
+                    }
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    document.getElementById('fileName').textContent = `Error: Cannot load file. Please choose file from computer instead.`;
+                    
+                    // Automatically switch to local file option
+                    document.getElementById('localFile').checked = true;
+                    document.getElementById('repoFileDiv').style.display = 'none';
+                    document.getElementById('localFileDiv').style.display = 'block';
+                }
+            };
+            
+            loadFile();
         }
     </script>
 </body>
